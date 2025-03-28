@@ -1,19 +1,20 @@
-# Node tabanlı imaj
 FROM node:18
 
-# ImageMagick yüklü değilse pdf2pic çalışmaz
+# Gerekli bağımlılıkları kur: GraphicsMagick!
 RUN apt-get update && \
-    apt-get install -y imagemagick && \
+    apt-get install -y graphicsmagick && \
     rm -rf /var/lib/apt/lists/*
 
-# Uygulama dosyalarını kopyala
+# Çalışma dizini
 WORKDIR /app
+
+# Uygulama dosyalarını kopyala
 COPY . .
 
-# Paketleri kur
+# Paketleri yükle
 RUN npm install
 
-# Port
+# Uygulama portu
 EXPOSE 3000
 
 # Başlat
