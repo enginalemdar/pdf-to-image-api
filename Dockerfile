@@ -1,18 +1,19 @@
-# Use official Node.js image
 FROM node:18-slim
+
+# Install dependencies for image conversion
+RUN apt-get update && apt-get install -y \
+    poppler-utils \
+    graphicsmagick \
+ && rm -rf /var/lib/apt/lists/*
 
 # Create app directory
 WORKDIR /app
 
-# Install dependencies
+# Copy files
 COPY package.json ./
 RUN npm install
+COPY . .
 
-# Bundle app source
-COPY server.js ./
-
-# Expose port
 EXPOSE 3000
 
-# Start server
-CMD [ "node", "server.js" ]
+CMD ["node", "server.js"]
