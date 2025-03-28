@@ -1,10 +1,18 @@
-FROM node:18
+# Use official Node.js image
+FROM node:18-slim
 
+# Create app directory
 WORKDIR /app
 
-COPY package*.json ./
+# Install dependencies
+COPY package.json ./
 RUN npm install
 
-COPY . .
+# Bundle app source
+COPY server.js ./
 
-CMD ["npm", "start"]
+# Expose port
+EXPOSE 3000
+
+# Start server
+CMD [ "node", "server.js" ]
