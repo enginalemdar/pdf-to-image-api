@@ -1,19 +1,20 @@
-FROM node:18-slim
+# Node tabanlı imaj
+FROM node:18
 
-# Install dependencies for image conversion
-RUN apt-get update && apt-get install -y \
-    poppler-utils \
-    graphicsmagick \
- && rm -rf /var/lib/apt/lists/*
+# ImageMagick yüklü değilse pdf2pic çalışmaz
+RUN apt-get update && \
+    apt-get install -y imagemagick && \
+    rm -rf /var/lib/apt/lists/*
 
-# Create app directory
+# Uygulama dosyalarını kopyala
 WORKDIR /app
-
-# Copy files
-COPY package.json ./
-RUN npm install
 COPY . .
 
+# Paketleri kur
+RUN npm install
+
+# Port
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+# Başlat
+CMD ["npm", "start"]
