@@ -1,43 +1,19 @@
-FROM node:20
+FROM node:20-slim
 
-# Puppeteer için gerekli sistem kütüphaneleri
+# Sistem bağımlılıkları (poppler-utils gerekiyor)
 RUN apt-get update && apt-get install -y \
-  wget \
-  ca-certificates \
-  fonts-liberation \
-  libappindicator3-1 \
-  libasound2 \
-  libatk-bridge2.0-0 \
-  libatk1.0-0 \
-  libcups2 \
-  libdbus-1-3 \
-  libgdk-pixbuf2.0-0 \
-  libnspr4 \
-  libnss3 \
-  libx11-xcb1 \
-  libxcomposite1 \
-  libxdamage1 \
-  libxrandr2 \
-  xdg-utils \
-  libu2f-udev \
-  libvulkan1 \
-  libxcb-dri3-0 \
-  libxshmfence1 \
-  libgbm1 \
-  --no-install-recommends && \
-  rm -rf /var/lib/apt/lists/*
+  poppler-utils \
+  && rm -rf /var/lib/apt/lists/*
 
-# Uygulama dizini
+# Çalışma klasörü
 WORKDIR /app
 
-# Dosyaları kopyala
-COPY . .
-
-# Paketleri yükle
+# Proje dosyalarını kopyala
+COPY package*.json ./
 RUN npm install
 
-# Port aç
-EXPOSE 3000
+COPY . .
 
-# Uygulama başlat
+# Sunucuyu başlat
+EXPOSE 3000
 CMD ["npm", "start"]
