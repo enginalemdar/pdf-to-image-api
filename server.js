@@ -2,7 +2,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
-const { PDFDocument } = require('pdf-lib');
 const { fromPath } = require('pdf2pic');
 const { v4: uuidv4 } = require('uuid');
 
@@ -18,39 +17,37 @@ app.post('/convert', async (req, res) => {
 
     const buffer = Buffer.from(base64, 'base64');
     const tempName = uuidv4();
-    const pdfPath = path.join('/tmp', `${tempName}.pdf`);
-    fs.writeFileSync(pdfPath, buffer);
+    const tempPdfPath = path.join('/tmp', `${tempName}.pdf`);
+    fs.writeFileSync(tempPdfPath, buffer);
 
-    const pdfDoc = await PDFDocument.load(buffer);
-    const pageCount = pdfDoc.getPageCount();
-
-    const converter = fromPath(pdfPath, {
-      density: 200,
+    const options = {
+      density: 150,
       saveFilename: `${tempName}`,
-      savePath: "/tmp",
-      format: "png",
+      savePath: '/tmp',
+      format: 'png',
       width: 1280,
-      height: 720
-    });
+      height: 720,
+    };
 
-    const images = [];
+    const convert = fromPath(tempPdfPath, options);
+    const totalPages = parseInt(req.body.page_count || '10'); // Manuel page count da alabilirsin
 
-    for (let i = 1; i <= pageCount; i++) {
-      const output = await converter(i);
+    const result = [];
+
+    for (let i = 1; i <= totalPages; i++) {
+      const output = await convert(i);
       const imgBuffer = fs.readFileSync(output.path);
       const base64Image = imgBuffer.toString('base64');
-
-      images.push({
+      result.push({
         page: i,
-        image_base64: `data:image/png;base64,${base64Image}`
+        image_base64: `data:image/png;base64,${base64Image}`,
       });
-
       fs.unlinkSync(output.path);
     }
 
-    fs.unlinkSync(pdfPath);
+    fs.unlinkSync(tempPdfPath);
 
-    res.json(images);
+    res.json(result);
   } catch (err) {
     console.error('Conversion failed:', err);
     res.status(500).json({ error: 'Conversion failed', details: err.message });
@@ -58,4 +55,4 @@ app.post('/convert', async (req, res) => {
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`✅ PDF Image API running on port ${port}`));
+app.listen(port, () => console.log(`PDF Image API running on port ${port}`));
