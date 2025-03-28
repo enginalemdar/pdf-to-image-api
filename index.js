@@ -17,20 +17,17 @@ app.post('/convert', async (req, res) => {
       return res.status(400).json({ error: 'No base64 provided' });
     }
 
-    // 1. PDF dosyasını yaz
     const buffer = Buffer.from(base64, 'base64');
     const tempName = uuidv4();
     const pdfPath = path.join('/tmp', `${tempName}.pdf`);
     fs.writeFileSync(pdfPath, buffer);
 
-    // 2. Sayfa sayısını tespit et
     const pdfDoc = await PDFDocument.load(buffer);
     const pageCount = pdfDoc.getPageCount();
 
-    // 3. Puppeteer başlat
     const browser = await puppeteer.launch({
-      headless: 'new',
-      args: ['--no-sandbox']
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     const page = await browser.newPage();
 
@@ -52,12 +49,11 @@ app.post('/convert', async (req, res) => {
         image_base64: `data:image/png;base64,${base64Image}`
       });
 
-      // Geçici görseli sil
       fs.unlinkSync(screenshotPath);
     }
 
     await browser.close();
-    fs.unlinkSync(pdfPath); // PDF dosyasını da temizle
+    fs.unlinkSync(pdfPath);
 
     res.json(images);
   } catch (err) {
@@ -67,4 +63,4 @@ app.post('/convert', async (req, res) => {
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`PDF Image API listening on port ${port}`));
+app.listen(port, () => console.log(`PDF Image API running on port ${port}`));
