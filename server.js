@@ -2,8 +2,9 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
+const { PDFDocument } = require('pdf-lib');
+const { fromPath } = require('pdf2pic');
 const { v4: uuidv4 } = require('uuid');
-const { convert } = require('pdf-to-png-converter');
 
 const app = express();
 app.use(bodyParser.json({ limit: '50mb' }));
@@ -20,16 +21,32 @@ app.post('/convert', async (req, res) => {
     const pdfPath = path.join('/tmp', `${tempName}.pdf`);
     fs.writeFileSync(pdfPath, buffer);
 
-    const outputImages = await convert(pdfPath, {
-      outputFolder: '/tmp',
-      outputFileMask: `${tempName}-page`,
-      pagesToProcess: [], // boşsa tüm sayfaları işler
+    const pdfDoc = await PDFDocument.load(buffer);
+    const pageCount = pdfDoc.getPageCount();
+
+    const converter = fromPath(pdfPath, {
+      density: 200,
+      saveFilename: `${tempName}`,
+      savePath: "/tmp",
+      format: "png",
+      width: 1280,
+      height: 720
     });
 
-    const images = outputImages.map((img, index) => ({
-      page: index + 1,
-      image_base64: `data:image/png;base64,${img.content.toString('base64')}`
-    }));
+    const images = [];
+
+    for (let i = 1; i <= pageCount; i++) {
+      const output = await converter(i);
+      const imgBuffer = fs.readFileSync(output.path);
+      const base64Image = imgBuffer.toString('base64');
+
+      images.push({
+        page: i,
+        image_base64: `data:image/png;base64,${base64Image}`
+      });
+
+      fs.unlinkSync(output.path);
+    }
 
     fs.unlinkSync(pdfPath);
 
@@ -41,4 +58,4 @@ app.post('/convert', async (req, res) => {
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`PDF Image API running on port ${port}`));
+app.listen(port, () => console.log(`✅ PDF Image API running on port ${port}`));
