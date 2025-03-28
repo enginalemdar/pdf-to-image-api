@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { fromPath } = require('pdf2pic');
 const { v4: uuidv4 } = require('uuid');
+const { PDFDocument } = require('pdf-lib');
 
 const app = express();
 app.use(bodyParser.json({ limit: '50mb' }));
@@ -20,6 +21,10 @@ app.post('/convert', async (req, res) => {
     const tempPdfPath = path.join('/tmp', `${tempName}.pdf`);
     fs.writeFileSync(tempPdfPath, buffer);
 
+    // Doğru sayfa sayısını hesapla
+    const pdfDoc = await PDFDocument.load(buffer);
+    const pageCount = pdfDoc.getPageCount();
+
     const options = {
       density: 150,
       saveFilename: `${tempName}`,
@@ -30,23 +35,36 @@ app.post('/convert', async (req, res) => {
     };
 
     const convert = fromPath(tempPdfPath, options);
-    const totalPages = parseInt(req.body.page_count || '10'); // Manuel page count da alabilirsin
-
     const result = [];
 
-    for (let i = 1; i <= totalPages; i++) {
-      const output = await convert(i);
-      const imgBuffer = fs.readFileSync(output.path);
-      const base64Image = imgBuffer.toString('base64');
-      result.push({
-        page: i,
-        image_base64: `data:image/png;base64,${base64Image}`,
-      });
-      fs.unlinkSync(output.path);
+    for (let i = 1; i <= pageCount; i++) {
+      try {
+        const output = await convert(i);
+
+        // Dosya gerçekten oluşmuş mu?
+        if (fs.existsSync(output.path)) {
+          const imgBuffer = fs.readFileSync(output.path);
+          const base64Image = imgBuffer.toString('base64');
+          result.push({
+            page: i,
+            image_base64: `data:image/png;base64,${base64Image}`,
+          });
+          fs.unlinkSync(output.path);
+        } else {
+          result.push({
+            page: i,
+            error: `Page ${i} could not be converted. File not found.`,
+          });
+        }
+      } catch (innerErr) {
+        result.push({
+          page: i,
+          error: `Error converting page ${i}: ${innerErr.message}`,
+        });
+      }
     }
 
     fs.unlinkSync(tempPdfPath);
-
     res.json(result);
   } catch (err) {
     console.error('Conversion failed:', err);
