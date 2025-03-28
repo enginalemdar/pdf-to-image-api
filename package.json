@@ -9,7 +9,7 @@
   "dependencies": {
     "body-parser": "^1.20.2",
     "express": "^4.18.2",
-    "puppeteer": "^21.3.8",
+    "puppeteer": "20.7.4",
     "pdf-lib": "^1.17.1",
     "sharp": "^0.33.1",
     "uuid": "^9.0.0"
