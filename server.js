@@ -32,7 +32,7 @@ app.post('/convert', async (req, res) => {
 
     const buffer = Buffer.from(base64, 'base64');
     const tempName = uuidv4();
-    const tempPdfPath = path.join('/tmp', ${tempName}.pdf);
+    const tempPdfPath = path.join('/tmp', `${tempName}.pdf`);
     fs.writeFileSync(tempPdfPath, buffer);
 
     // Doğru sayfa sayısını hesapla
@@ -41,7 +41,7 @@ app.post('/convert', async (req, res) => {
 
     const options = {
       density: 150,
-      saveFilename: ${tempName},
+      saveFilename: `${tempName}`,
       savePath: '/tmp',
       format: 'png',
       width: 1280,
@@ -61,19 +61,19 @@ app.post('/convert', async (req, res) => {
           const base64Image = imgBuffer.toString('base64');
           result.push({
             page: i,
-            image_base64: data:image/png;base64,${base64Image},
+            image_base64: `data:image/png;base64,${base64Image}`,
           });
           fs.unlinkSync(output.path);
         } else {
           result.push({
             page: i,
-            error: Page ${i} could not be converted. File not found.,
+            error: `Page ${i} could not be converted. File not found.`,
           });
         }
       } catch (innerErr) {
         result.push({
           page: i,
-          error: Error converting page ${i}: ${innerErr.message},
+          error: `Error converting page ${i}: ${innerErr.message}`,
         });
       }
     }
@@ -87,7 +87,7 @@ app.post('/convert', async (req, res) => {
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(PDF Image API running on port ${port}));
+app.listen(port, () => console.log(`PDF Image API running on port ${port}`));
 app.get('/health', (req, res) => {
   res.status(200).send('ok');
 });
