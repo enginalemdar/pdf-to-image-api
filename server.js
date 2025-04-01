@@ -88,3 +88,6 @@ app.post('/convert', async (req, res) => {
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`PDF Image API running on port ${port}`));
+app.get('/health', (req, res) => {
+  res.status(200).send('ok');
+});
