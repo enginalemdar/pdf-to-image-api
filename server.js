@@ -11,6 +11,20 @@ app.use(bodyParser.json({ limit: '50mb' }));
 
 app.post('/convert', async (req, res) => {
   try {
+    // /tmp temizliği burada
+    const tempFolder = '/tmp';
+    fs.readdir(tempFolder, (err, files) => {
+      if (err) {
+        console.error('Failed to read /tmp:', err);
+        return;
+      }
+      for (const file of files) {
+        fs.unlink(path.join(tempFolder, file), (err) => {
+          if (err) console.error('Failed to delete:', file, err);
+        });
+      }
+    });
+
     const base64 = req.body.pdf_base64;
     if (!base64) {
       return res.status(400).json({ error: 'No base64 provided' });
